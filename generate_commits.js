@@ -2,7 +2,7 @@
 /**
  * Generate backdated git commits for GitHub contribution graph.
  * Usage: node generate_commits.js [--dry-run] [--seed N]
- *         node generate_commits.js --eye [--dry-run]  (eye only Jan 1–Feb 27 2026)
+ *         node generate_commits.js --eye [--dry-run]  (10 commits at mosaic center only, Jan 1–Feb 27 2026)
  * Run from repo root. Expects clean working tree or orphan branch.
  */
 
@@ -39,22 +39,15 @@ function getContributionGridPosition(date) {
   return { col, row };
 }
 
-function getEyeCommitsForCell(col, row) {
-  const cx = 4, cy = 3;
-  const dx = col - cx, dy = row - cy;
-  if (col === cx && row === cy) return 0;
-  const inIris = (dx * dx) / (2.5 * 2.5) + (dy * dy) / (2 * 2) <= 1;
-  if (inIris) {
-    const dist = (dx * dx) / (2.5 * 2.5) + (dy * dy) / (2 * 2);
-    return dist <= 0.4 ? 20 : 8;
-  }
-  return 0;
-}
+// Center of the mosaic (one cell): 10 commits there, 0 everywhere else.
+const EYE_CENTER_COL = 4;
+const EYE_CENTER_ROW = 3;
+const EYE_CENTER_COMMITS = 10;
 
 function getEyeCommitsForDate(date) {
   const { col, row } = getContributionGridPosition(date);
   if (col < 0 || col >= EYE_COLS || row < 0 || row >= EYE_ROWS) return 0;
-  return getEyeCommitsForCell(col, row);
+  return col === EYE_CENTER_COL && row === EYE_CENTER_ROW ? EYE_CENTER_COMMITS : 0;
 }
 
 function formatGitDateUTC(year, month, date, secondOffset = 0) {
@@ -128,7 +121,7 @@ function main() {
   if (eyeMode) {
     startDate = new Date(EYE_START);
     endDate = new Date(EYE_END);
-    console.log('Eye mode: commits only Jan 1 – Feb 27 2026 (UTC)');
+    console.log('Eye mode: 10 commits at mosaic center only, Jan 1 – Feb 27 2026 (UTC)');
   } else {
     endDate = new Date();
     endDate.setHours(0, 0, 0, 0);
